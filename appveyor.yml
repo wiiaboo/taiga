@@ -1,0 +1,43 @@
+image: Visual Studio 2017
+branches:
+  only:
+  - develop
+skip_tags: true
+configuration: Release
+before_build:
+- git submodule update --init --recursive
+- git -C deps\data\anime-relations\ checkout --detach origin/master
+- curl -o vswhere.exe -L https://github.com/Microsoft/vswhere/releases/download/1.0.58/vswhere.exe
+- for /f "usebackq delims=" %%i in (`vswhere -property installationPath`) do @call set VS150INSTALLDIR=%%i\Common7\Tools\
+- call "%VS150INSTALLDIR%\VsDevCmd.bat"
+- call deps\src\curl\buildconf.bat
+- cd deps\src\curl\winbuild\
+- nmake /f Makefile.vc mode=static RTLIBCFG=static VC=15 MACHINE=x86
+- xcopy /s ..\builds\libcurl-vc15-x86-release-static-ipv6-sspi-winssl\lib ..\..\..\lib\
+
+build:
+  project: project\vs2017\Taiga.sln
+  parallel: true
+  verbosity: minimal
+
+test: off
+
+after_build:
+- cd %APPVEYOR_BUILD_FOLDER%
+- set PATH=C:\Program Files (x86)\NSIS;%PATH%
+- makensis.exe setup\Taiga.nsi
+- for /f %%a in ('git describe --tags --abbrev^=0 --match^=v*') do set gittagversion=%%a
+- for /f %%a in ('git log -1 --format^=format:%%cd --date^=format:%%Y%%m%%d') do set gitdescribe=%%a
+- move bin\TaigaSetup.exe bin\TaigaSetup-%gitdescribe%.exe
+- appveyor PushArtifact bin\TaigaSetup-%gitdescribe%.exe
+
+deploy:
+- provider: GitHub
+  tag: $(gittagversion)
+  release: $(gittagversion).$(APPVEYOR_BUILD_NUMBER)
+  auth_token:
+    secure: pVq1DaS5K76UHaWGz9SLdrcAqLgTwWBlOuBH90/wKPE48mQmpYRV5OLZ0Tq2up1A
+  artifact: TaigaSetup-$(gitdescribe).exe
+  force_update: true
+  on:
+    branch: develop

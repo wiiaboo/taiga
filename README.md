@@ -1,4 +1,5 @@
 # Taiga
+[![Build status](https://ci.appveyor.com/api/projects/status/ilxg17862w11qq7s?svg=true)](https://ci.appveyor.com/project/wiiaboo/taiga)
 
 Taiga is an open-source desktop application for Windows. It automatically detects the anime videos you're watching on your computer and synchronizes your progress with online services such as [AniList](https://anilist.co), [Kitsu](https://kitsu.io) and [MyAnimeList](https://myanimelist.net). It helps you manage your anime library, discover new series, share watched episodes and download new ones.
 
